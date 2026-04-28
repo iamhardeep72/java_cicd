@@ -12,20 +12,14 @@
     </parent>
 
     <dependencies>
-        <!-- Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
-        <!-- Thymeleaf for HTML -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
+        <finalName>demo</finalName> <!-- IMPORTANT -->
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
