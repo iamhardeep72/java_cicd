@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Setup Java
@@ -37,15 +37,19 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
+          script_stop: false   # 🔥 IMPORTANT FIX
           script: |
             echo "Stopping old app..."
-            if pgrep -f demo.jar; then
-              pkill -f demo.jar
-            else
-              echo "No app running"
-            fi
+            pkill -f demo.jar || true
+
+            sleep 2
 
             echo "Starting new app..."
             nohup java -jar /home/ubuntu/demo.jar > app.log 2>&1 &
+
+            sleep 5
+
+            echo "Checking app..."
+            pgrep -f demo.jar && echo "✅ Running" || (echo "❌ Failed" && exit 1)
 
             echo "Done"
