@@ -1,36 +1,44 @@
-name: Java CI/CD Pipeline
+name: Java CI/CD with EC2
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up JDK 17
+      - name: Setup Java
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: 'maven'
+          cache: maven
 
-      - name: Build with Maven
+      - name: Build JAR
         run: mvn clean package
 
-      - name: Build Docker Image
-        run: docker build -t demo-app .
+      # Copy JAR to EC2
+      - name: Copy file to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "target/demo-1.0.jar"
+          target: "/home/ubuntu/"
 
-      # Optional: push to DockerHub
-      # - name: Login to DockerHub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKER_USERNAME }}
-      #     password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # - name: Push Image
-      #   run: docker push demo-app
+      # SSH and restart app
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            pkill -f 'demo-1.0.jar' || true
+            nohup java -jar /home/ubuntu/demo-1.0.jar > app.log 2>&1 &
